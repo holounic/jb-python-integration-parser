@@ -18,11 +18,12 @@ import java.util.List;
  */
 public class BuildErrorParser {
 
-    private ParserSource source;
     private static final char LINEBREAK = '\n';
+    private ParserSource source;
 
     /**
      * Parses a block whilst the сurrent char satisfies the {@param criterion}
+     *
      * @param criterion defines which characters are valid for the current block. Parsing stops,
      *                  when invalid character found
      * @return a String of valid characters, which is a substring of source text
@@ -44,7 +45,7 @@ public class BuildErrorParser {
      * @return String, representing a file path
      */
     private String parseFilePath() {
-        skipIncl(c -> c != '\"');
+        skip(c -> c != '\"', true);
         return parseBlock(c -> c != '\"');
     }
 
@@ -52,7 +53,7 @@ public class BuildErrorParser {
      * @return String, representing a line number
      */
     private String parseLineNumber() {
-        skipExcl(c -> !Character.isDigit(c));
+        skip(c -> !Character.isDigit(c), false);
         return parseBlock(c -> Character.isDigit(c));
     }
 
@@ -63,7 +64,7 @@ public class BuildErrorParser {
      */
     private ExceptionStackTraceElement parseStacktrase() throws UnexpectedTokenException {
         String filePath = parseFilePath();
-        skipExcl(c -> !Character.isLetterOrDigit(c));
+        skip(c -> !Character.isLetterOrDigit(c), false);
 
         int lineNumber;
         if (source.test("line")) {
@@ -81,7 +82,7 @@ public class BuildErrorParser {
      * @return a String, representing a type of the source error
      */
     private String parseErrorType() {
-        skipExcl(c -> !Character.isLetterOrDigit(c));
+        skip(c -> !Character.isLetterOrDigit(c), false);
         return parseBlock(c -> c != ':');
     }
 
@@ -89,8 +90,8 @@ public class BuildErrorParser {
      * @return a String, representing a message of the source error
      */
     private String parseErrorMessage() {
-         skipExcl(c-> !isInformative(c));
-         return parseBlock(c -> c != LINEBREAK);
+        skip(c -> !isInformative(c), false);
+        return parseBlock(c -> c != LINEBREAK);
     }
 
     /**
@@ -100,29 +101,30 @@ public class BuildErrorParser {
      * @throws ParserException if the given text does not follow the standart python exception syntax
      */
     @NotNull
-     public PythonExceptionImpl parseExceptionMessage(@NotNull String message) throws ParserException {
-         source = new ParserSource(message);
+    public PythonExceptionImpl parseExceptionMessage(@NotNull String message) throws ParserException {
+        source = new ParserSource(message);
 
-         List<ExceptionStackTraceElement> stackTrace = new ArrayList<>();
-         while (true) {
-             nextLine();
-             skipExcl(c -> !isInformative(c));
-             if (!source.test("File")) {
-                 break;
-             }
-             stackTrace.add(parseStacktrase());
-         }
-         String exceptionType = parseErrorType();
-         String exceptionMessage = parseErrorMessage();
+        List<ExceptionStackTraceElement> stackTrace = new ArrayList<>();
+        while (true) {
+            nextLine();
+            skip(c -> !isInformative(c), false);
+            if (!source.test("File")) {
+                break;
+            }
+            stackTrace.add(parseStacktrase());
+        }
+        String exceptionType = parseErrorType();
+        String exceptionMessage = parseErrorMessage();
 
-         source = null;
-         if (exceptionType == null || exceptionMessage == null || stackTrace.isEmpty()) {
+        if (exceptionType == null || exceptionMessage == null || stackTrace.isEmpty()) {
             throw new WrongInputFormatException();
-         }
+        }
 
-         File exceptionAbsolutePath = stackTrace.get(stackTrace.size() - 1).getLocation();
-         return new PythonExceptionImpl(exceptionType, exceptionMessage, exceptionAbsolutePath, stackTrace);
-     }
+        File exceptionAbsolutePath = stackTrace.get(stackTrace.size() - 1).getLocation();
+        source = null;
+
+        return new PythonExceptionImpl(exceptionType, exceptionMessage, exceptionAbsolutePath, stackTrace);
+    }
 
     private boolean isInformative(char c) {
         return Character.isLetterOrDigit(c) || c == LINEBREAK;
@@ -132,16 +134,14 @@ public class BuildErrorParser {
         source.skip(c -> !isInformative(c));
     }
 
-    private void skipExcl(Criterion criterion) {
+    private void skip(Criterion criterion, boolean include) {
         source.skip(criterion);
-    }
-
-    private void skipIncl(Criterion criterion) {
-        skipExcl(criterion);
-        source.getNext();
+        if (include) {
+            source.getNext();
+        }
     }
 
     private void nextLine() {
-        skipIncl(c -> c != LINEBREAK);
+        skip(c -> c != LINEBREAK, true);
     }
 }

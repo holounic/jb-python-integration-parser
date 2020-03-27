@@ -3,7 +3,7 @@ package pythonIntegration.parser;
 
 public class ParserSource {
     private final String source;
-    private int pointer;
+    private int index;
 
     public ParserSource(String source) {
         if (source == null) {
@@ -13,23 +13,23 @@ public class ParserSource {
     }
 
     public int getIndex() {
-        return pointer;
+        return index;
     }
 
     public char getNext() {
-        if (pointer >= source.length()) {
+        if (index >= source.length()) {
             return '\0';
         }
-        return source.charAt(pointer++);
+        return source.charAt(index++);
     }
 
     public boolean test(String toCompare) {
         int length = toCompare.length();
-        if (pointer + length >= source.length()) {
+        if (index + length >= source.length()) {
             return false;
         }
-        if (toCompare.equals(source.substring(pointer, pointer + length))) {
-            pointer += length;
+        if (toCompare.equals(source.substring(index, index + length))) {
+            index += length;
             return true;
         }
         return false;
@@ -40,10 +40,10 @@ public class ParserSource {
     }
 
     public char peek() {
-        if (pointer >= source.length()) {
+        if (index >= source.length()) {
             return '\0';
         }
-        return source.charAt(pointer);
+        return source.charAt(index);
     }
 
     public String substring(int beginIndex, int endIndex) {
@@ -54,12 +54,12 @@ public class ParserSource {
     }
 
     public boolean hasNext() {
-        return pointer < source.length();
+        return index < source.length();
     }
 
     public void skip(Criterion criterion) {
         while (hasNext() && criterion.satisfies(peek())) {
-            pointer++;
+            index++;
         }
     }
 }

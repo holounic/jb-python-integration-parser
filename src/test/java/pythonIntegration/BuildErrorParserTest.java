@@ -74,6 +74,12 @@ public class BuildErrorParserTest {
         Assert.assertEquals("/home/admin/library.py", exceptionSource.getLocation().getAbsolutePath());
         Assert.assertEquals(2, exceptionSource.getLine());
 
+        try {
+            parser.parseExceptionMessage("приветули");
+        } catch (ParserException e) {
+            log(e.getMessage());
+        }
+
     }
 
     public void log(Object message) {
