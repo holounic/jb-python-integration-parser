@@ -50,4 +50,9 @@ public class PythonExceptionImpl implements PythonException {
     public List<ExceptionStackTraceElement> getStackTrace() {
         return exceptionStackTrace;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Type: %s\nMessage: %s\nLocation: %s", exceptionType, exceptionMessage,exceptionLocation);
+    }
 }

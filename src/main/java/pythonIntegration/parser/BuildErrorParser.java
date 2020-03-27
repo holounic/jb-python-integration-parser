@@ -82,15 +82,18 @@ public class BuildErrorParser {
      * @return a String, representing a type of the source error
      */
     private String parseErrorType() {
-        skip(c -> !Character.isLetterOrDigit(c), false);
-        return parseBlock(c -> c != ':');
+        nextLine();
+        skip(c -> Character.isWhitespace(c), false);
+        String type = parseBlock(c -> c != ':');
+        source.getNext();
+        return type;
     }
 
     /**
      * @return a String, representing a message of the source error
      */
     private String parseErrorMessage() {
-        skip(c -> !isInformative(c), false);
+        skip(c -> Character.isWhitespace(c), false);
         return parseBlock(c -> c != LINEBREAK);
     }
 
@@ -127,7 +130,7 @@ public class BuildErrorParser {
     }
 
     private boolean isInformative(char c) {
-        return Character.isLetterOrDigit(c) || c == LINEBREAK;
+        return !Character.isWhitespace(c) || c == LINEBREAK;
     }
 
     private void skipWhiteSpace() {
