@@ -41,14 +41,6 @@ public class BuildErrorParserTest {
             "oopsy"
     };
 
-    private static final String[] ANNOTATIONS = {
-            "1 / 0",
-            "unicorn 2",
-            "keyyyg",
-            ":(((((((",
-            "something went wrong"
-    };
-
     @Test
     public void testGiven() {
         String text = "Traceback (most recent call last):\n" +
@@ -58,8 +50,10 @@ public class BuildErrorParserTest {
                 "    return 1 1 1 1\n" +
                 "             ^\n" +
                 "SyntaxError: invalid syntax";
+        int [] lines = new int []{ 2, 1 };
+        String [] paths = new String [] { "/home/admin/library", "file"};
         try {
-            test("/home/admin/library", "SyntaxError", "invalid syntax", 2,2,false, text);
+            test(paths, "SyntaxError", "invalid syntax", lines,false, text);
         } catch (AssertionError e) {
             errorMessage(0, "GIVEN", text);
             throw e;
@@ -70,10 +64,11 @@ public class BuildErrorParserTest {
     @Test
     public void testStandart() {
         for (int i = 0; i < STANDART_TESTS_NUMBER; i++) {
-            int line = i + 1;
-            String text = generateExceptionText(ABSOLUTE_PATHS[i], line, ANNOTATIONS[i], ERROR_TYPES[i], ERROR_MESSAGES[i]);
+            int [] lines = generateLines(1);
+            String [] paths = new String [] { ABSOLUTE_PATHS[i] };
+            String text = generateExceptionText(paths, lines,  ERROR_TYPES[i], ERROR_MESSAGES[i]);
             try {
-                test(ABSOLUTE_PATHS[i], ERROR_TYPES[i], ERROR_MESSAGES[i], 1, line,false, text);
+                test(paths, ERROR_TYPES[i], ERROR_MESSAGES[i], lines,false, text);
             } catch (AssertionError e) {
                 errorMessage(i, "STANDART", text);
                 throw e;
@@ -85,14 +80,15 @@ public class BuildErrorParserTest {
     @Test
     public void testRandom() {
         for (int i = 0; i < RANDOM_TESTS_NUMBER; i++) {
-            String path = generateFilePath(generateNumber());
-            int line = generateNumber();
-            String annotation = generateAnnotation(generateNumber());
+            int stackTraseLength = generateNumber();
+            String [] paths = generatePaths(stackTraseLength);
+            int [] lines = generateLines(stackTraseLength);
+
             String type = generateExceptionName(generateNumber());
             String message = generateAnnotation(generateNumber());
-            String text = generateExceptionText(path, line, annotation, type, message);
+            String text = generateExceptionText(paths, lines, type, message);
             try {
-                test(path, type, message, 1, line, false, text);
+                test(paths, type, message, lines, false, text);
             } catch (AssertionError e) {
                 errorMessage(i, "RANDOM", text);
                 throw e;
@@ -106,7 +102,7 @@ public class BuildErrorParserTest {
         for (int i = 0; i < WRONG_INPUT_TESTS_NUMBER; i++) {
             String text = generateRandomArgument(i, c -> true);
             try {
-                test(null, null, null, 0, 0,true, text);
+                test(null, null, null, null, true, text);
             } catch (AssertionError e) {
                 errorMessage(i, "WRONG INPUT FORMAT", text);
                 throw e;
@@ -115,26 +111,47 @@ public class BuildErrorParserTest {
         passedMessage(WRONG_INPUT_TESTS_NUMBER, "WRONG INPUT FORMAT");
     }
 
-    private void test(final String path, final String type, final String errorMessage,
-                      final int stackTraseLength, final int line, final boolean expectedException, final String text) {
-        PythonException exception = new PythonExceptionImpl();
+    private void test(final String [] paths, final String type, final String errorMessage,
+                       final int [] lines, final boolean expectedException, final String text) {
+        PythonException exception;
         try {
             exception = parser.parseExceptionMessage(text);
         } catch (ParserException e) {
             Assert.assertTrue(expectedException);
             return;
         }
-        checkOutput(exception, path, extractInformative(type), extractInformative(errorMessage), stackTraseLength, line);
+        checkOutput(exception, paths, extractInformative(type), extractInformative(errorMessage), lines);
     }
 
-    private void checkOutput(PythonException result, String absolutePath, String errorType, String errorMessage, int stackTraseLength, int line) {
-        compare(absolutePath + ".py", result.getExceptionLocation().getAbsolutePath());
+    private void checkOutput(PythonException result, String [] paths, String errorType, String errorMessage, int [] lines) {
+        compare(paths[0] + ".py", result.getExceptionLocation().getAbsolutePath());
         compare(errorType, result.getExceptionType());
         compare(errorMessage, result.getExceptionMessage());
         int realSTSize = result.getStackTrace().size();
-        compare(stackTraseLength, realSTSize);
-        compare(line, result.getStackTrace().get(realSTSize - 1).getLine());
-        compare(new File(absolutePath + ".py"), result.getStackTrace().get(realSTSize - 1).getLocation());
+        compare(paths.length, realSTSize);
+        compare(lines[0], result.getStackTrace().get(realSTSize - 1).getLine());
+        compare(new File(paths[0] + ".py"), result.getStackTrace().get(realSTSize - 1).getLocation());
+    }
+
+    private String generateExceptionText(String [] paths, int [] lines, String errorType, String errorMessage) {
+        return new StringBuilder("Traceback (most recent call last):\n")
+                .append(generateStackTrase(paths, lines))
+                .append("             ^\n")
+                .append(errorType).append(": ")
+                .append(errorMessage)
+                .toString();
+    }
+
+    private String generateStackTrase(String [] paths, int [] lines) {
+        StringBuilder stackTrase = new StringBuilder();
+        for (int i = paths.length - 1; i >= 0; i--) {
+            stackTrase.append(generateStackTraseElement(paths[i], lines[i]));
+        }
+        return stackTrase.toString();
+    }
+
+    private String generateStackTraseElement(String path, int line) {
+        return String.format("  File \"%s.py\", line %d\n" + "  %s\n", path, line, generateAnnotation(generateNumber()));
     }
 
     private static String generateRandomArgument(int targetLength, CharFilter criterion) {
@@ -162,12 +179,20 @@ public class BuildErrorParserTest {
         return '/' + generateRandomArgument(targetLength, x -> x == (int) '/' || Character.isLetterOrDigit(x));
     }
 
-    private String generateExceptionText(String absolutePath, int line, String annotation, String errorType, String errorMessage) {
-        return String.format("Traceback (most recent call last):\n" +
-                "  File \"%s.py\", line %d\n" +
-                "  %s\n" +
-                "             ^\n" +
-                "%s: %s", absolutePath, line, annotation, errorType, errorMessage);
+    private int [] generateLines(int length) {
+        int [] lines = new int[length];
+        for (int i = 0; i < length; i++) {
+            lines[i] = generateNumber();
+        }
+        return lines;
+    }
+
+    private String [] generatePaths(int length) {
+        String [] paths = new String [length];
+        for (int i = 0; i < length; i++) {
+            paths[i] = generateFilePath(generateNumber());
+        }
+        return paths;
     }
 
     private void compare(Object expected, Object found) {
