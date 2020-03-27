@@ -50,7 +50,7 @@ public class BuildErrorParserTest {
     };
 
     @Test
-    public void testGivenTest() {
+    public void testGiven() {
         String text = "Traceback (most recent call last):\n" +
                 "  File \"file.py\", line 1, in <module>\n" +
                 "    import library\n" +
@@ -85,11 +85,11 @@ public class BuildErrorParserTest {
     @Test
     public void testRandom() {
         for (int i = 0; i < RANDOM_TESTS_NUMBER; i++) {
-            String path = generateFilePath(10);
-            int line = i + 1;
-            String annotation = generateAnnotation(20);
-            String type = generateExceptionName(10);
-            String message = generateAnnotation(20);
+            String path = generateFilePath(generateNumber());
+            int line = generateNumber();
+            String annotation = generateAnnotation(generateNumber());
+            String type = generateExceptionName(generateNumber());
+            String message = generateAnnotation(generateNumber());
             String text = generateExceptionText(path, line, annotation, type, message);
             try {
                 test(path, type, message, 1, line, false, text);
@@ -146,16 +146,16 @@ public class BuildErrorParserTest {
                 .toString();
     }
 
+    private int generateNumber() {
+        return new Random().nextInt(100) + 1;
+    }
+
     private String generateAnnotation(int targetLength) {
         return generateRandomArgument(targetLength, x -> true);
     }
 
     private String generateExceptionName(int targetLength) {
         return generateRandomArgument(targetLength, x -> Character.isLetterOrDigit(x) || x == '_' || x == '-');
-    }
-
-    private int generateLineNumber(int targetLength) {
-        return Integer.parseInt(generateRandomArgument(targetLength, x -> x > 47 && x < 58));
     }
 
     private static String generateFilePath(int targetLength) {
