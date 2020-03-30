@@ -12,7 +12,7 @@ import java.util.Random;
 public class BuildErrorParserTest {
     private static final BuildErrorParser parser = new BuildErrorParser();
 
-    private final int STANDART_TESTS_NUMBER = ERROR_TYPES.length;
+    private final int STANDARD_TESTS_NUMBER = ERROR_TYPES.length;
     private final int RANDOM_TESTS_NUMBER = 100;
     private final int WRONG_INPUT_TESTS_NUMBER = 10;
 
@@ -63,18 +63,18 @@ public class BuildErrorParserTest {
 
     @Test
     public void testStandard() {
-        for (int i = 0; i < STANDART_TESTS_NUMBER; i++) {
+        for (int i = 0; i < STANDARD_TESTS_NUMBER; i++) {
             int [] lines = generateLines(1);
             String [] paths = new String [] { ABSOLUTE_PATHS[i] };
             String text = generateExceptionText(paths, lines,  ERROR_TYPES[i], ERROR_MESSAGES[i]);
             try {
                 test(paths, ERROR_TYPES[i], ERROR_MESSAGES[i], lines,false, text);
             } catch (AssertionError e) {
-                errorMessage(i, "STANDART", text);
+                errorMessage(i, "STANDARD", text);
                 throw e;
             }
         }
-        passedMessage(STANDART_TESTS_NUMBER, "STANDART");
+        passedMessage(STANDARD_TESTS_NUMBER, "STANDARD");
     }
 
     @Test
