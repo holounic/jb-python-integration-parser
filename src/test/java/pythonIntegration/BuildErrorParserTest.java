@@ -62,7 +62,7 @@ public class BuildErrorParserTest {
     }
 
     @Test
-    public void testStandart() {
+    public void testStandard() {
         for (int i = 0; i < STANDART_TESTS_NUMBER; i++) {
             int [] lines = generateLines(1);
             String [] paths = new String [] { ABSOLUTE_PATHS[i] };
