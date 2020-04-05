@@ -15,7 +15,7 @@ File "<file path>", line <line number>, <additional info>
     <annotation>
 ```
 
-The output of the program output is an instance of **PythonExceptionImpl** class, containing location, type, message and stack trase of the given python exception.
+The output of the program is an instance of **PythonExceptionImpl** class, containing location, type, message and stack trase of the given python exception.
 
 ### Tests
 <ul>
