@@ -27,7 +27,7 @@ public class BuildErrorParser {
      * @param criterion defines which characters are valid for the current block. Parsing stops,
      *                  when invalid character found
      * @return a String of valid characters, which is a substring of source text
-     * (excluding terminal whitespaces)
+     * (excluding terminal and leading whitespaces)
      */
     private String parseBlock(Criterion criterion) {
         int beginIndex = source.getIndex();
@@ -101,7 +101,7 @@ public class BuildErrorParser {
      * @param message the text of the source error
      * @return instance of {@code PythonExceptionImpl}, representing message, type, location and stacktrase
      * of the given python exception
-     * @throws ParserException if the given text does not follow the standart python exception syntax
+     * @throws ParserException if the given text does not follow the standard python exception syntax
      */
     @NotNull
     public PythonExceptionImpl parseExceptionMessage(@NotNull String message) throws ParserException {
